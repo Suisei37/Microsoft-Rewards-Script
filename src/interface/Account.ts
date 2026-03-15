@@ -2,6 +2,7 @@ export interface Account {
     email: string
     password: string
     totp?: string
+    enabled?: boolean
     geoLocale: 'auto' | string
     proxy: AccountProxy
 }
