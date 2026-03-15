@@ -50,6 +50,60 @@ export default class BrowserFunc {
         }
     }
 
+async getEarnRscRewards(page: any) {
+
+ const fetchRsc = async (url: string): Promise<string> => {
+  return await page.evaluate(async (u: string): Promise<string> => {
+
+    const res = await fetch(u, {
+      headers: {
+        accept: "text/x-component",
+        RSC: "1"
+      },
+      credentials: "include"
+    })
+
+    return await res.text()
+
+  }, url)
+}
+
+ const earnRsc = await fetchRsc("https://rewards.bing.com/earn?_rsc=1")
+ const dashRsc = await fetchRsc("https://rewards.bing.com/dashboard?_rsc=1")
+
+ const rewards = new Map<string,string>()
+
+ const parse = (rsc:string) => {
+
+  const objRegex = /\{[^{}]*offerId[^{}]*\}/g
+
+  let m
+
+  while ((m = objRegex.exec(rsc)) !== null) {
+
+   const obj = m[0]
+
+   const get = (key:string)=>{
+    const r = new RegExp(`"${key}":"?([^",}]+)`,"i")
+    const k = obj.match(r)
+    return k ? k[1] : null
+   }
+
+   const offerId = get("offerId")
+   const hash = get("hash")
+
+   if (offerId && hash) {
+    rewards.set(offerId, hash)
+   }
+  }
+ }
+
+ parse(earnRsc)
+ parse(dashRsc)
+
+ return rewards
+}
+
     /**
      * Fetch user app dashboard data
      * @returns {AppDashboardData} Object of user bing rewards dashboard data

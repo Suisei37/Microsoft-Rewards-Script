@@ -81,6 +81,8 @@ export class MicrosoftRewardsBot {
 
     public accessToken = ''
     public requestToken = ''
+    public nextActionToken = ''
+    public rscRewards = new Map<string,string>()
     public cookies: { mobile: Cookie[]; desktop: Cookie[] }
     public fingerprint!: BrowserFingerprintWithHeaders
 

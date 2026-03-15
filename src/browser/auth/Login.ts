@@ -42,7 +42,11 @@ export class Login {
         try {
             this.bot.logger.info(this.bot.isMobile, 'LOGIN', 'Starting login process')
 
-            await page.goto('https://www.bing.com/rewards/dashboard', { waitUntil: 'domcontentloaded' }).catch(() => {})
+            await page
+                .goto('https://rewards.bing.com/createuser?idru=%2F&userScenarioId=anonsignin', {
+                    waitUntil: 'domcontentloaded'
+                })
+                .catch(() => {})
             await this.bot.utils.wait(2000)
             await this.bot.browser.utils.reloadBadPage(page)
 
@@ -364,6 +368,7 @@ export class Login {
     }
 
     private async finalizeLogin(page: Page, email: string) {
+        this.bot.nextActionToken = "70babbc81d2724f60d29a95c03b3d739cba77cea92"
         this.bot.logger.info(this.bot.isMobile, 'LOGIN', 'Finalizing login')
 
         await page.goto(this.bot.config.baseURL, { waitUntil: 'networkidle', timeout: 10000 }).catch(() => {})
@@ -380,6 +385,7 @@ export class Login {
         }
 
         await this.verifyBingSession(page)
+        this.bot.rscRewards = new Map()
         await this.getRewardsSession(page)
 
         const browser = page.context()
@@ -447,70 +453,119 @@ export class Login {
         }
     }
 
-    private async getRewardsSession(page: Page) {
-        const loopMax = 5
+private async getRewardsSession(page: Page) {
 
-        this.bot.logger.info(this.bot.isMobile, 'GET-REQUEST-TOKEN', 'Fetching request token')
+    const loopMax = 5
 
-        try {
-            await page
-                .goto(`${this.bot.config.baseURL}?_=${Date.now()}`, { waitUntil: 'networkidle', timeout: 10000 })
-                .catch(() => {})
+    this.bot.logger.info(this.bot.isMobile, 'GET-REQUEST-TOKEN', 'Fetching request token')
 
-            for (let i = 0; i < loopMax; i++) {
-                if (page.isClosed()) break
+    try {
+
+        await page
+            .goto(`${this.bot.config.baseURL}?_=${Date.now()}`, { waitUntil: 'networkidle', timeout: 10000 })
+            .catch(() => {})
+
+        for (let i = 0; i < loopMax; i++) {
+
+            if (page.isClosed()) break
+
+            this.bot.logger.debug(
+                this.bot.isMobile,
+                'GET-REWARD-SESSION',
+                `Loop ${i + 1}/${loopMax} | URL=${page.url()}`
+            )
+
+            const u = new URL(page.url())
+            const atRewardHome = u.hostname === 'rewards.bing.com' && u.pathname === '/'
+
+            if (atRewardHome) {
+
+                await this.bot.browser.utils.tryDismissAllMessages(page)
+
+                const html = await page.content()
+                const $ = await this.bot.browser.utils.loadInCheerio(html)
+
+                const token =
+                    $('input[name="__RequestVerificationToken"]').attr('value') ??
+                    $('meta[name="__RequestVerificationToken"]').attr('content') ??
+                    null
+
+                if (token) {
+
+                    this.bot.requestToken = token
+
+                    this.bot.logger.info(
+                        this.bot.isMobile,
+                        'GET-REQUEST-TOKEN',
+                        'Request token has been set!'
+                    )
+
+                    this.bot.logger.debug(
+                        this.bot.isMobile,
+                        'GET-REWARD-SESSION',
+                        `Token extracted: ${token.substring(0, 10)}...`
+                    )
+
+                    return
+                }
 
                 this.bot.logger.debug(
                     this.bot.isMobile,
                     'GET-REWARD-SESSION',
-                    `Loop ${i + 1}/${loopMax} | URL=${page.url()}`
+                    'Token NOT found on page'
                 )
-
-                const u = new URL(page.url())
-                const atRewardHome = u.hostname === 'rewards.bing.com' && u.pathname === '/'
-
-                if (atRewardHome) {
-                    await this.bot.browser.utils.tryDismissAllMessages(page)
-
-                    const html = await page.content()
-                    const $ = await this.bot.browser.utils.loadInCheerio(html)
-
-                    const token =
-                        $('input[name="__RequestVerificationToken"]').attr('value') ??
-                        $('meta[name="__RequestVerificationToken"]').attr('content') ??
-                        null
-
-                    if (token) {
-                        this.bot.requestToken = token
-                        this.bot.logger.info(this.bot.isMobile, 'GET-REQUEST-TOKEN', 'Request token has been set!')
-
-                        this.bot.logger.debug(
-                            this.bot.isMobile,
-                            'GET-REWARD-SESSION',
-                            `Token extracted: ${token.substring(0, 10)}...`
-                        )
-                        return
-                    }
-
-                    this.bot.logger.debug(this.bot.isMobile, 'GET-REWARD-SESSION', 'Token NOT found on page')
-                }
-
-                await this.bot.utils.wait(1000)
             }
+
+            await this.bot.utils.wait(1000)
+        }
+
+        /*
+        ==================================
+        TOKEN TIDAK DITEMUKAN → UI BARU
+        ==================================
+        */
+
+        this.bot.logger.warn(
+            this.bot.isMobile,
+            'GET-REQUEST-TOKEN',
+            'No RequestVerificationToken found — switching to NEW Rewards UI'
+        )
+
+        try {
+
+            this.bot.logger.info(
+                this.bot.isMobile,
+                'GET-RSC-PAYLOAD',
+                'Fetching RSC payload'
+            )
+
+            this.bot.rscRewards =
+                await this.bot.browser.func.getEarnRscRewards(page)
+
+            this.bot.logger.info(
+                this.bot.isMobile,
+                'GET-RSC-PAYLOAD',
+                `RSC payload has been set!`
+            )
+
+        } catch (e) {
 
             this.bot.logger.warn(
                 this.bot.isMobile,
-                'GET-REQUEST-TOKEN',
-                'No RequestVerificationToken found — some activities may not work'
-            )
-        } catch (error) {
-            throw this.bot.logger.error(
-                this.bot.isMobile,
-                'GET-REQUEST-TOKEN',
-                `Reward session error: ${error instanceof Error ? error.message : String(error)}`
+                'GET-RSC-PAYLOAD',
+                'Failed to fetch RSC payload'
             )
         }
+
+    } catch (error) {
+
+        throw this.bot.logger.error(
+            this.bot.isMobile,
+            'GET-REQUEST-TOKEN',
+            `Reward session error: ${error instanceof Error ? error.message : String(error)}`
+        )
     }
+}
 
     async getAppAccessToken(page: Page, email: string) {
         return await new MobileAccessLogin(this.bot, page).get(email)

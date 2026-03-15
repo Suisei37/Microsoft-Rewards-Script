@@ -3,6 +3,7 @@
         "email": "email_1",
         "password": "password_1",
         "totp": "",
+        "enabled": true,
         "geoLocale": "auto",
         "proxy": {
             "proxyAxios": true,
@@ -16,6 +17,7 @@
         "email": "email_2",
         "password": "password_2",
         "totp": "",
+        "enabled": true,
         "geoLocale": "auto",
         "proxy": {
             "proxyAxios": true,
