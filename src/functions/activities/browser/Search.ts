@@ -264,7 +264,7 @@ export class Search extends Workers {
 
     private async bingSearch(searchPage: Page, query: string, isMobile: boolean) {
         const maxAttempts = 5
-        const refreshThreshold = 10 // Page gets sluggish after x searches?
+        const refreshThreshold = 11 // Page gets sluggish after x searches?
 
         this.searchCount++
 
