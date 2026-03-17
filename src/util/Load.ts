@@ -1,4 +1,4 @@
-import type { Cookie } from 'patchright'
+import type { Cookie } from 'playwright-core'
 import type { BrowserFingerprintWithHeaders } from 'fingerprint-generator'
 import fs from 'fs'
 import path from 'path'
@@ -19,11 +19,16 @@ export function loadAccounts(): Account[] {
 
         const accountDir = path.join(__dirname, '../', file)
         const accounts = fs.readFileSync(accountDir, 'utf-8')
-        const accountsData = JSON.parse(accounts)
+        const accountsData: Account[] = JSON.parse(accounts)
 
         validateAccounts(accountsData)
 
-        return accountsData
+        // Filter hanya account yang enabled
+        const enabledAccounts = accountsData.filter(
+            acc => acc.enabled !== false
+        )
+
+        return enabledAccounts
     } catch (error) {
         throw new Error(error as string)
     }

@@ -1,6 +1,6 @@
 import type { AxiosRequestConfig } from 'axios'
 import { randomBytes } from 'crypto'
-import type { Page } from 'patchright'
+import type { Page } from 'playwright-core'
 import * as fs from 'fs'
 import path from 'path'
 

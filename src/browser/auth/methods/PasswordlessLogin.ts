@@ -1,4 +1,4 @@
-import type { Page } from 'patchright'
+import type { Page } from 'playwright-core'
 import type { MicrosoftRewardsBot } from '../../../index'
 
 export class PasswordlessLogin {

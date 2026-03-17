@@ -1,4 +1,4 @@
-import type { Page } from 'patchright'
+import type { Page } from 'playwright-core'
 import type { MicrosoftRewardsBot } from '../../index'
 import { saveSessionData } from '../../util/Load'
 
@@ -158,7 +158,7 @@ export class Login {
     }
 
     private async detectCurrentState(page: Page, account?: Account): Promise<LoginState> {
-        await page.waitForLoadState('networkidle', { timeout: 5000 }).catch(() => {})
+        await page.waitForLoadState('domcontentloaded').catch(() => {})
 
         const url = new URL(page.url())
         this.bot.logger.debug(this.bot.isMobile, 'DETECT-STATE', `Current URL: ${url.hostname}${url.pathname}`)
@@ -276,7 +276,7 @@ export class Login {
 
     private async checkSelector(page: Page, selector: string): Promise<boolean> {
         return page
-            .waitForSelector(selector, { state: 'visible', timeout: 200 })
+            .waitForSelector(selector, { state: 'visible', timeout: 800 })
             .then(() => true)
             .catch(() => false)
     }

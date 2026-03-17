@@ -2,6 +2,7 @@ export interface Account {
     email: string
     password: string
     totpSecret?: string
+    enabled?: boolean
     recoveryEmail: string
     geoLocale: 'auto' | string
     langCode: 'en' | string

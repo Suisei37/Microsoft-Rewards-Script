@@ -1,4 +1,4 @@
-import rebrowser, { BrowserContext } from 'patchright'
+import { chromium, Browser as PWBrowser, BrowserContext } from 'playwright-core'
 import { newInjectedContext } from 'fingerprint-injector'
 import { BrowserFingerprintWithHeaders, FingerprintGenerator } from 'fingerprint-generator'
 
@@ -27,6 +27,8 @@ class Browser {
         '--no-sandbox',
         '--mute-audio',
         '--disable-setuid-sandbox',
+        '--disable-dev-shm-usage',
+        '--disable-gpu',
         '--ignore-certificate-errors',
         '--ignore-certificate-errors-spki-list',
         '--ignore-ssl-errors',
@@ -44,7 +46,7 @@ class Browser {
     }
 
     async createBrowser(account: Account): Promise<BrowserCreationResult> {
-        let browser: rebrowser.Browser
+        let browser: PWBrowser
         try {
             const proxyConfig = account.proxy.url
                 ? {
@@ -57,8 +59,9 @@ class Browser {
                   }
                 : undefined
 
-            browser = await rebrowser.chromium.launch({
+                browser = await chromium.launch({
                 headless: this.bot.config.headless,
+                executablePath: '/usr/bin/chromium',
                 ...(proxyConfig && { proxy: proxyConfig }),
                 args: [...Browser.BROWSER_ARGS]
             })

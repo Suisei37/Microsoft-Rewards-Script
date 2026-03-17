@@ -1,4 +1,4 @@
-import type { BrowserContext, Cookie } from 'patchright'
+import type { BrowserContext, Cookie } from 'playwright-core'
 import type { AxiosRequestConfig } from 'axios'
 
 import type { MicrosoftRewardsBot } from '../index'

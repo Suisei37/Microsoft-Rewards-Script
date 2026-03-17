@@ -1,4 +1,4 @@
-import { type Page, type BrowserContext } from 'patchright'
+import { type Page, type BrowserContext } from 'playwright-core'
 import { CheerioAPI, load } from 'cheerio'
 import { ClickOptions, createCursor } from 'ghost-cursor-playwright-port'
 

@@ -1,4 +1,4 @@
-import type { Page } from 'patchright'
+import type { Page } from 'playwright-core'
 import { randomBytes } from 'crypto'
 import type { Counters, DashboardData } from '../../../interface/DashboardData'
 
