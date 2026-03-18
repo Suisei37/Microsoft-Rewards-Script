@@ -19,7 +19,11 @@ export class Search extends Workers {
 
         try {
             let searchCounters: Counters = await this.bot.browser.func.getSearchPoints()
-            const missingPoints = this.bot.browser.func.missingSearchPoints(searchCounters, isMobile)
+            const missingPoints = this.bot.browser.func.missingSearchPoints(
+    searchCounters,
+    isMobile,
+    this.bot.config.searchSettings.mobileConsumesDesktop
+)
             let missingPointsTotal = missingPoints.totalPoints
 
             this.bot.logger.debug(
@@ -71,7 +75,11 @@ export class Search extends Workers {
                 const query = queries[i] as string
 
                 searchCounters = await this.bingSearch(page, query, isMobile)
-                const newMissingPoints = this.bot.browser.func.missingSearchPoints(searchCounters, isMobile)
+                const newMissingPoints = this.bot.browser.func.missingSearchPoints(
+    searchCounters,
+    isMobile,
+    this.bot.config.searchSettings.mobileConsumesDesktop
+)
                 const newMissingPointsTotal = newMissingPoints.totalPoints
 
                 const rawGained = missingPointsTotal - newMissingPointsTotal
@@ -184,7 +192,11 @@ export class Search extends Workers {
                         )
 
                         searchCounters = await this.bingSearch(page, query, isMobile)
-                        const newMissingPoints = this.bot.browser.func.missingSearchPoints(searchCounters, isMobile)
+                        const newMissingPoints = this.bot.browser.func.missingSearchPoints(
+    searchCounters,
+    isMobile,
+    this.bot.config.searchSettings.mobileConsumesDesktop
+)
                         const newMissingPointsTotal = newMissingPoints.totalPoints
 
                         const rawGained = missingPointsTotal - newMissingPointsTotal

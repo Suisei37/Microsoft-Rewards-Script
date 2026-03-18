@@ -20,6 +20,7 @@ export interface ConfigSearchSettings {
     scrollRandomResults: boolean
     clickRandomResults: boolean
     parallelSearching: boolean
+    mobileConsumesDesktop?: boolean
     queryEngines: QueryEngine[]
     searchResultVisitTime: number | string
     searchDelay: ConfigDelay

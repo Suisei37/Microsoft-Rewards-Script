@@ -10,7 +10,7 @@
         "doMorePromotions": true,
         "doPunchCards": false,
         "doAppPromotions": true,
-        "doDesktopSearch": true,
+        "doDesktopSearch": false,
         "doMobileSearch": true,
         "doDailyCheckIn": true,
         "doReadToEarn": true
@@ -21,6 +21,7 @@
         "scrollRandomResults": false,
         "clickRandomResults": false,
         "parallelSearching": false,
+        "mobileConsumesDesktop": true,
         "queryEngines": ["google", "wikipedia", "reddit", "local"],
         "searchResultVisitTime": "10sec",
         "searchDelay": {

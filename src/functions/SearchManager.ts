@@ -35,16 +35,31 @@ export class SearchManager {
             `Start | account=${accountEmail} | mobileMissing=${missingSearchPoints.mobilePoints} | desktopMissing=${missingSearchPoints.desktopPoints}`
         )
 
-        const doMobile = this.bot.config.workers.doMobileSearch && missingSearchPoints.mobilePoints > 0
-        const doDesktop = this.bot.config.workers.doDesktopSearch && missingSearchPoints.desktopPoints > 0
+        let effectiveMobilePoints = missingSearchPoints.mobilePoints
+        let effectiveDesktopPoints = missingSearchPoints.desktopPoints
+
+if (this.bot.config.searchSettings.mobileConsumesDesktop) {
+    this.bot.logger.info(
+        'main',
+        'SEARCH-MANAGER',
+        `Mobile override: merging desktop(${missingSearchPoints.desktopPoints}) into mobile`
+    )
+
+    effectiveMobilePoints += missingSearchPoints.desktopPoints
+    effectiveDesktopPoints = 0
+}
+
+        const doMobile = this.bot.config.workers.doMobileSearch && effectiveMobilePoints > 0
+        const doDesktop = this.bot.config.workers.doDesktopSearch && effectiveDesktopPoints > 0
+        
 
         const mobileStatus = this.bot.config.workers.doMobileSearch
-            ? missingSearchPoints.mobilePoints > 0
+    ? effectiveMobilePoints > 0
                 ? 'run'
                 : 'skip-no-points'
             : 'skip-disabled'
         const desktopStatus = this.bot.config.workers.doDesktopSearch
-            ? missingSearchPoints.desktopPoints > 0
+            ? effectiveDesktopPoints > 0
                 ? 'run'
                 : 'skip-no-points'
             : 'skip-disabled'
@@ -52,7 +67,7 @@ export class SearchManager {
         this.bot.logger.info(
             'main',
             'SEARCH-MANAGER',
-            `Mobile: ${mobileStatus} (enabled=${this.bot.config.workers.doMobileSearch}, missing=${missingSearchPoints.mobilePoints})`
+            `Mobile: ${mobileStatus} (enabled=${this.bot.config.workers.doMobileSearch}, missing=${effectiveMobilePoints})`
         )
         this.bot.logger.info(
             'main',
@@ -280,8 +295,22 @@ export class SearchManager {
             `Sequential config | account=${accountEmail} | mobileMissing=${missingSearchPoints.mobilePoints} | desktopMissing=${missingSearchPoints.desktopPoints}`
         )
 
-        const shouldDoMobile = this.bot.config.workers.doMobileSearch && missingSearchPoints.mobilePoints > 0
-        const shouldDoDesktop = this.bot.config.workers.doDesktopSearch && missingSearchPoints.desktopPoints > 0
+   let effectiveMobilePoints = missingSearchPoints.mobilePoints
+        let effectiveDesktopPoints = missingSearchPoints.desktopPoints
+
+if (this.bot.config.searchSettings.mobileConsumesDesktop) {
+    this.bot.logger.info(
+        'main',
+        'SEARCH-MANAGER',
+        `Mobile override: merging desktop(${missingSearchPoints.desktopPoints}) into mobile`
+    )
+
+    effectiveMobilePoints += missingSearchPoints.desktopPoints
+    effectiveDesktopPoints = 0
+}
+
+const shouldDoMobile = this.bot.config.workers.doMobileSearch && effectiveMobilePoints > 0
+const shouldDoDesktop = this.bot.config.workers.doDesktopSearch && effectiveDesktopPoints > 0
 
         this.bot.logger.debug(
             'main',
@@ -297,11 +326,11 @@ export class SearchManager {
             this.bot.logger.debug(
                 'main',
                 'SEARCH-MANAGER',
-                `Sequential mobile | target=${missingSearchPoints.mobilePoints}`
+                `Sequential mobile | target=${missingSearchPoints.desktopPoints}`
             )
             mobilePoints = await this.doMobileSearch(
-                data,
-                missingSearchPoints,
+    data,
+    { ...missingSearchPoints, mobilePoints: effectiveMobilePoints },
                 mobileSession,
                 accountEmail,
                 executionContext
@@ -336,8 +365,8 @@ export class SearchManager {
                 `Sequential desktop | target=${missingSearchPoints.desktopPoints}`
             )
             desktopPoints = await this.doDesktopSearchSequential(
-                data,
-                missingSearchPoints,
+    data,
+    { ...missingSearchPoints, desktopPoints: effectiveDesktopPoints },
                 account,
                 accountEmail,
                 executionContext

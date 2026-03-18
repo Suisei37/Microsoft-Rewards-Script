@@ -174,19 +174,33 @@ export default class BrowserFunc {
         return dashboardData.userStatus.counters
     }
 
-    missingSearchPoints(counters: Counters, isMobile: boolean): MissingSearchPoints {
-        const mobileData = counters.mobileSearch?.[0]
-        const desktopData = counters.pcSearch?.[0]
-        const edgeData = counters.pcSearch?.[1]
+    missingSearchPoints(
+    counters: Counters,
+    isMobile: boolean,
+    mobileConsumesDesktop: boolean = false
+): MissingSearchPoints {
+    const mobileData = counters.mobileSearch?.[0]
+    const desktopData = counters.pcSearch?.[0]
+    const edgeData = counters.pcSearch?.[1]
 
-        const mobilePoints = mobileData ? Math.max(0, mobileData.pointProgressMax - mobileData.pointProgress) : 0
-        const desktopPoints = desktopData ? Math.max(0, desktopData.pointProgressMax - desktopData.pointProgress) : 0
-        const edgePoints = edgeData ? Math.max(0, edgeData.pointProgressMax - edgeData.pointProgress) : 0
+    const mobilePoints = mobileData ? Math.max(0, mobileData.pointProgressMax - mobileData.pointProgress) : 0
+    const desktopPoints = desktopData ? Math.max(0, desktopData.pointProgressMax - desktopData.pointProgress) : 0
+    const edgePoints = edgeData ? Math.max(0, edgeData.pointProgressMax - edgeData.pointProgress) : 0
 
-        const totalPoints = isMobile ? mobilePoints : desktopPoints + edgePoints
+    let totalPoints: number
 
-        return { mobilePoints, desktopPoints, edgePoints, totalPoints }
+    if (isMobile && mobileConsumesDesktop) {
+        // 🔥 NEW BEHAVIOR
+        totalPoints = mobilePoints + desktopPoints + edgePoints
+    } else {
+        // 🔁 OLD BEHAVIOR
+        totalPoints = isMobile
+            ? mobilePoints
+            : desktopPoints + edgePoints
     }
+
+    return { mobilePoints, desktopPoints, edgePoints, totalPoints }
+}
 
     /**
      * Get total earnable points with web browser
