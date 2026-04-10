@@ -1,3 +1,21 @@
+const originalWrite = process.stdout.write.bind(process.stdout)
+
+process.stdout.write = (chunk: any, encoding?: any, callback?: any) => {
+    const str = chunk?.toString?.() || ''
+
+    // 🔥 block seluruh dump session
+    if (
+        str.includes('Closing session: SessionEntry') ||
+        str.includes('_chains:') ||
+        str.includes('currentRatchet') ||
+        str.includes('ephemeralKeyPair')
+    ) {
+        return true
+    }
+
+    return originalWrite(chunk, encoding, callback)
+}
+
 import makeWASocket, {
     useMultiFileAuthState,
     makeCacheableSignalKeyStore,
@@ -10,20 +28,6 @@ import { Boom } from '@hapi/boom'
 
 import fs from 'fs'
 
-const originalLog = console.log
-
-console.log = (...args: any[]) => {
-    const msg = args[0]
-
-    if (
-        typeof msg === 'string' &&
-        msg.includes('Closing session: SessionEntry')
-    ) {
-        return // 🔥 block log ini
-    }
-
-    originalLog(...args)
-}
 
 let sock: any = null
 let isReady = false
