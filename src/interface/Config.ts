@@ -50,7 +50,7 @@ export interface ConfigWorkers {
 
 // Webhooks
 export interface ConfigWebhook {
-    whatsapp?: WebhookWhatsAppConfig
+    telegram?: WebhookTelegramConfig
     discord?: WebhookDiscordConfig
     ntfy?: WebhookNtfyConfig
     webhookLogFilter: LogFilter
@@ -79,8 +79,8 @@ export interface WebhookNtfyConfig {
     priority?: 1 | 2 | 3 | 4 | 5 // 5 highest (important)
 }
 
-export interface WebhookWhatsAppConfig {
+export interface WebhookTelegramConfig {
     enabled: boolean
-    number: string
-    sessionPath: string
+    token: string
+    chatId: string
 }

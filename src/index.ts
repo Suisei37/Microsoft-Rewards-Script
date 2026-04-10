@@ -23,7 +23,7 @@ import type { Account } from './interface/Account'
 import AxiosClient from './util/Axios'
 import { sendDiscord, flushDiscordQueue } from './logging/Discord'
 import { sendNtfy, flushNtfyQueue } from './logging/Ntfy'
-import { ensureWhatsAppReady, sendWhatsApp, formatWhatsAppStats } from './logging/WhatsApp'
+import { initTelegram, sendTelegram, formatSummaryStats } from './logging/Telegram'
 import type { DashboardData } from './interface/DashboardData'
 import type { AppDashboardData } from './interface/AppDashBoardData'
 import { PanelFlyoutData } from './interface/PanelFlyoutData'
@@ -418,14 +418,14 @@ try {
                 'green'
             )
             
-            const message = formatWhatsAppStats(accountStats)
+const message = formatSummaryStats(accountStats)
 
-    if (this.config.webhook.whatsapp?.enabled) {
-        await sendWhatsApp(
-            this.config.webhook.whatsapp.number,
-            message
-        )
-    }
+// ==========================
+// TELEGRAM (PRIMARY)
+// ==========================
+if (this.config.webhook.telegram?.enabled) {
+    await sendTelegram(message)
+}
 
     // (opsional tapi recommended biar aman)
     await new Promise(r => setTimeout(r, 2000))
@@ -558,11 +558,10 @@ async function main(): Promise<void> {
     checkNodeVersion()
     const rewardsBot = new MicrosoftRewardsBot()
 
-  if (rewardsBot.config.webhook.whatsapp?.enabled) {
-    await ensureWhatsAppReady(
-        rewardsBot.config.webhook.whatsapp.sessionPath,
-        rewardsBot.config.webhook.whatsapp.number
-    )
+if (rewardsBot.config.webhook.telegram?.enabled) {
+    const tg = rewardsBot.config.webhook.telegram
+
+    initTelegram(tg.token, tg.chatId)
 }
 
     process.on('beforeExit', () => {
