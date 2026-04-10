@@ -23,6 +23,7 @@ import type { Account } from './interface/Account'
 import AxiosClient from './util/Axios'
 import { sendDiscord, flushDiscordQueue } from './logging/Discord'
 import { sendNtfy, flushNtfyQueue } from './logging/Ntfy'
+import { ensureWhatsAppReady, sendWhatsApp, formatWhatsAppStats } from './logging/WhatsApp'
 import type { DashboardData } from './interface/DashboardData'
 import type { AppDashboardData } from './interface/AppDashBoardData'
 import { PanelFlyoutData } from './interface/PanelFlyoutData'
@@ -416,6 +417,18 @@ try {
                 `Completed all accounts | Accounts processed: ${accountStats.length} | Total points collected: +${totalCollectedPoints} | Old total: ${totalInitialPoints} → New total: ${totalFinalPoints} | Total runtime: ${totalDurationMinutes}min`,
                 'green'
             )
+            
+            const message = formatWhatsAppStats(accountStats)
+
+    if (this.config.webhook.whatsapp?.enabled) {
+        await sendWhatsApp(
+            this.config.webhook.whatsapp.number,
+            message
+        )
+    }
+
+    // (opsional tapi recommended biar aman)
+    await new Promise(r => setTimeout(r, 2000))
 
             await flushAllWebhooks()
             process.exit(0)
@@ -544,6 +557,13 @@ async function main(): Promise<void> {
     // Check before doing anything
     checkNodeVersion()
     const rewardsBot = new MicrosoftRewardsBot()
+
+  if (rewardsBot.config.webhook.whatsapp?.enabled) {
+    await ensureWhatsAppReady(
+        rewardsBot.config.webhook.whatsapp.sessionPath,
+        rewardsBot.config.webhook.whatsapp.number
+    )
+}
 
     process.on('beforeExit', () => {
         void flushAllWebhooks()

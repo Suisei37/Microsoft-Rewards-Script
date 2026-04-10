@@ -45,6 +45,11 @@
         "queryEngine": true
     },
     "webhook": {
+        "whatsapp": {
+            "enabled": false,
+            "number": "62xxxxxxxxxx",
+            "sessionPath": "dist/browser/wa-session"
+    },
         "discord": {
             "enabled": false,
             "url": ""

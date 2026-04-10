@@ -43,6 +43,7 @@
         "typescript": "^5.9.3"
     },
     "dependencies": {
+        "@whiskeysockets/baileys": "^7.0.0-rc.9",
         "axios": "^1.13.5",
         "axios-retry": "^4.5.0",
         "chalk": "^4.1.2",
