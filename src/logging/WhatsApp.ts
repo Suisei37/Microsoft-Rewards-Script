@@ -105,8 +105,8 @@ export async function initWhatsApp(sessionPath: string, phoneNumber: string) {
         if (connection === 'close') {
             const reason = new Boom(lastDisconnect?.error)?.output?.statusCode
             
-            // 🔥 HANDLE KHUSUS 513
-    if (reason === 513) {
+            // 🔥 HANDLE KHUSUS 515
+    if (reason === 515) {
         console.log('🔄 Logging in (pairing in progress)...')
         return
     } 
