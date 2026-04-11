@@ -1,7 +1,13 @@
+import PQueue from 'p-queue'
 import TelegramBot from 'node-telegram-bot-api'
 
 let bot: TelegramBot | null = null
 let chatId: string = ''
+
+const telegramQueue = new PQueue({
+    interval: 1000,
+    intervalCap: 1
+})
 
 export function initTelegram(token: string, targetChatId: string) {
     bot = new TelegramBot(token, { polling: false })
@@ -11,11 +17,18 @@ export function initTelegram(token: string, targetChatId: string) {
 export async function sendTelegram(text: string) {
     if (!bot || !chatId) return
 
-    try {
-        await bot.sendMessage(chatId, text)
-    } catch (err) {
-        console.error('Telegram send error:', err)
-    }
+    await telegramQueue.add(async () => {
+        await bot!.sendMessage(chatId, text)
+    })
+}
+
+export async function flushTelegramQueue(timeoutMs = 5000): Promise<void> {
+    await Promise.race([
+        telegramQueue.onIdle(),
+        new Promise((_, reject) =>
+            setTimeout(() => reject(new Error('telegram flush timeout')), timeoutMs)
+        )
+    ]).catch(() => {})
 }
 
 export function formatSummaryStats(accountStats: any[]) {
