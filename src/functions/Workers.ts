@@ -176,35 +176,88 @@ public async doMonthlyClaim(page: Page) {
         this.bot.logger.info(this.bot.isMobile, 'SPECIAL-ACTIVITY', 'All "Special Activites" items have been completed')
     }
 
-    public async doPunchCards(data: DashboardData, page: Page) {
-        const punchCards =
-            data.punchCards?.filter(
-                x => !x.parentPromotion?.complete && (x.parentPromotion?.pointProgressMax ?? 0) > 0
-            ) ?? []
+    public async doPunchCards(_data: DashboardData, page: Page) {
+        this.bot.logger.info(this.bot.isMobile, 'PUNCHCARD', 'Starting manual punch card detection via navigation')
 
-        const punchCardActivities = punchCards.flatMap(x => x.childPromotions)
-
-        const activitiesUncompleted: BasePromotion[] =
-            punchCardActivities?.filter(x => {
-                if (x.complete) return false
-                if (x.exclusiveLockedFeatureStatus === 'locked') return false
-                if (!x.promotionType) return false
-
-                return true
-            }) ?? []
-
-        if (!activitiesUncompleted.length) {
-            this.bot.logger.info(this.bot.isMobile, 'PUNCHCARD', 'All "Punch Card" items have already been completed')
-            return
+        const dialogHandler = async (dialog: any) => {
+            this.bot.logger.info(this.bot.isMobile, 'PUNCHCARD', `Dismissing alert: "${dialog.message()}"`)
+            await dialog.dismiss()
         }
 
-        this.bot.logger.info(
-            this.bot.isMobile,
-            'PUNCHCARD',
-            `Started solving ${activitiesUncompleted.length} "Punch Card" items`
-        )
+        try {
+            page.on('dialog', dialogHandler)
 
-        await this.solveActivities(activitiesUncompleted, page)
+            // 1. Go to Earn page
+            this.bot.logger.debug(this.bot.isMobile, 'PUNCHCARD', 'Navigating to Earn page...')
+            await page.goto('https://rewards.bing.com/earn', { waitUntil: 'networkidle' })
+
+            // 2. Find all links that lead to a punchcard quest
+            const punchCardLinks = await page.$$eval('a[href*="_punchcard"]', links =>
+                links.map(link => (link as HTMLAnchorElement).href)
+            )
+
+            const uniqueLinks = [...new Set(punchCardLinks)]
+            this.bot.logger.info(this.bot.isMobile, 'PUNCHCARD', `Found ${uniqueLinks.length} unique punch cards`)
+
+            if (uniqueLinks.length === 0) {
+                return
+            }
+
+            for (const link of uniqueLinks) {
+                this.bot.logger.info(this.bot.isMobile, 'PUNCHCARD', `Opening punch card: ${link}`)
+
+                await page.goto(link, { waitUntil: 'networkidle' })
+                await this.bot.utils.wait(2000) // Wait for content to settle
+
+                // 3. Find active tasks (Bing search or ms-search)
+                // Use a more aggressive selector to ensure we find them
+                const taskLinks = await page.$$('a[href*="bing.com/search"], a[href*="ms-search://"], [role="link"]:not([disabled])')
+
+                let foundTask = false
+                for (const task of taskLinks) {
+                    const href = await task.getAttribute('href')
+                    const ariaLabel = await task.getAttribute('aria-label')
+                    
+                    // Check if it's a relevant task link
+                    if (!href || (!href.includes('bing.com/search') && !href.includes('ms-search://'))) continue
+
+                    const isDisabled = await task.evaluate(el =>
+                        el.getAttribute('aria-disabled') === 'true' ||
+                        el.classList.contains('cursor-not-allowed') ||
+                        el.hasAttribute('disabled')
+                    )
+
+                    if (!isDisabled) {
+                        this.bot.logger.info(this.bot.isMobile, 'PUNCHCARD', `Found active task: ${ariaLabel || href}`)
+
+                        // Use dispatchEvent to trigger click without actually navigating or opening protocol if possible
+                        // This is often enough to register the click with Rewards
+                        await task.evaluate(el => {
+                            el.dispatchEvent(new MouseEvent('click', { bubbles: true, cancelable: true, view: window }))
+                        })
+
+                        this.bot.logger.info(this.bot.isMobile, 'PUNCHCARD', 'Task clicked successfully')
+                        
+                        // Small wait for registration
+                        await this.bot.utils.wait(this.bot.utils.randomDelay(4000, 6000))
+                        
+                        foundTask = true
+                        break // Take 1 task per card per day
+                    }
+                }
+
+                if (!foundTask) {
+                    this.bot.logger.debug(this.bot.isMobile, 'PUNCHCARD', 'No active tasks found on this punch card')
+                }
+
+                await this.bot.utils.wait(this.bot.utils.randomDelay(2000, 4000))
+            }
+
+        } catch (error) {
+            this.bot.logger.error(this.bot.isMobile, 'PUNCHCARD', `Error during manual punch card processing: ${error instanceof Error ? error.message : String(error)}`)
+        } finally {
+            page.off('dialog', dialogHandler)
+        }
 
         this.bot.logger.info(this.bot.isMobile, 'PUNCHCARD', 'All "Punch Card" items have been completed')
     }

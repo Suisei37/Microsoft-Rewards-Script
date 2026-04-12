@@ -9,7 +9,7 @@
         "doDailySet": true,
         "doSpecialPromotions": true,
         "doMorePromotions": true,
-        "doPunchCards": false,
+        "doPunchCards": true,
         "doAppPromotions": true,
         "doDesktopSearch": false,
         "doMobileSearch": true,
