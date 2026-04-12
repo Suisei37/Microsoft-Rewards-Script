@@ -23,7 +23,7 @@ import type { Account } from './interface/Account'
 import AxiosClient from './util/Axios'
 import { sendDiscord, flushDiscordQueue } from './logging/Discord'
 import { sendNtfy, flushNtfyQueue } from './logging/Ntfy'
-import { initTelegram, sendTelegram, formatSummaryStats, flushTelegramQueue } from './logging/Telegram'
+import { initTelegram, sendTelegram, formatSummaryStats } from './logging/Telegram'
 import type { DashboardData } from './interface/DashboardData'
 import type { AppDashboardData } from './interface/AppDashBoardData'
 import { PanelFlyoutData } from './interface/PanelFlyoutData'
@@ -59,7 +59,7 @@ export function getCurrentContext(): ExecutionContext {
 }
 
 async function flushAllWebhooks(timeoutMs = 5000): Promise<void> {
-    await Promise.allSettled([flushDiscordQueue(timeoutMs), flushNtfyQueue(timeoutMs), flushTelegramQueue(timeoutMs)])
+    await Promise.allSettled([flushDiscordQueue(timeoutMs), flushNtfyQueue(timeoutMs)])
 }
 
 interface UserData {
@@ -498,7 +498,9 @@ if (this.config.webhook.telegram?.enabled) {
                         browserEarnable.mobileSearchPoints
                     } | App: ${appEarnable?.totalEarnablePoints ?? 0} | ${accountEmail} | locale: ${this.userData.geoLocale}`
                 )
-
+                if (this.config.workers.doMonthlyClaim) {
+    await this.activities.doMonthlyClaim(this.mainMobilePage)
+}
                 if (this.config.workers.doAppPromotions) await this.workers.doAppPromotions(appData)
                 if (this.config.workers.doDailySet) await this.workers.doDailySet(data, this.mainMobilePage)
                 if (this.config.workers.doSpecialPromotions) await this.workers.doSpecialPromotions(data)

@@ -37,6 +37,7 @@ export interface ConfigProxy {
 }
 
 export interface ConfigWorkers {
+    doMonthlyClaim: boolean
     doDailySet: boolean
     doSpecialPromotions: boolean
     doMorePromotions: boolean

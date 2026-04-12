@@ -15,6 +15,8 @@ import { DoubleSearchPoints } from './activities/api/DoubleSearchPoints'
 // Browser
 import { SearchOnBing } from './activities/browser/SearchOnBing'
 import { Search } from './activities/browser/Search'
+import { MonthlyClaim } from './activities/browser/MonthlyClaim'
+
 
 import type {
     BasePromotion,
@@ -32,6 +34,11 @@ export default class Activities {
     }
 
     // Browser Activities
+    doMonthlyClaim = async (page: Page): Promise<void> => {
+    const monthlyClaim = new MonthlyClaim(this.bot)
+    await monthlyClaim.doMonthlyClaim(page)
+    }    
+
     doSearch = async (data: DashboardData, page: Page, isMobile: boolean): Promise<number> => {
         const search = new Search(this.bot)
         return await search.doSearch(data, page, isMobile)

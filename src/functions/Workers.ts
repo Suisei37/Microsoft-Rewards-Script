@@ -16,6 +16,10 @@ export class Workers {
         this.bot = bot
     }
 
+public async doMonthlyClaim(page: Page) {
+    await this.bot.activities.doMonthlyClaim(page)
+}
+
     public async doDailySet(data: DashboardData, page: Page) {
         const todayKey = this.bot.utils.getFormattedDate()
         const todayData = data.dailySetPromotions[todayKey]

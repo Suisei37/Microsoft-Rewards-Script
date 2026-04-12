@@ -80,6 +80,28 @@ export default class BrowserUtils {
                 }
                 await this.bot.utils.wait(250)
             }
+// 🆕 Rewards New UI Intro Overlay (Get Rewards Now)
+try {
+    const introBtn = await page
+        .locator('button:has-text("Get Rewards Now")')
+        .first()
+        .isVisible()
+        .catch(() => false)
+
+    if (introBtn) {
+        const clicked = await this.ghostClick(page, 'button:has-text("Get Rewards Now")')
+
+        if (clicked) {
+            this.bot.logger.debug(
+                this.bot.isMobile,
+                'DISMISS-ALL-MESSAGES',
+                'Dismissed: Rewards Intro Overlay (Get Rewards Now)'
+            )
+
+            await this.bot.utils.wait(1000)
+        }
+    }
+} catch {}
         } catch (error) {
             this.bot.logger.warn(
                 this.bot.isMobile,

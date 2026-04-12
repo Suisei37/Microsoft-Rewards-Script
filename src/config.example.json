@@ -5,6 +5,7 @@
     "clusters": 1,
     "errorDiagnostics": false,
     "workers": {
+        "doMonthlyClaim": true,
         "doDailySet": true,
         "doSpecialPromotions": true,
         "doMorePromotions": true,
