@@ -52,6 +52,10 @@ export class DailyCheckIn extends Workers {
             if (this.gainedPoints > 0) {
                 this.bot.userData.currentPoints = newBalance
                 this.bot.userData.gainedPoints = (this.bot.userData.gainedPoints ?? 0) + this.gainedPoints
+                this.bot.userData.dailyCheckIn = {
+                    success: true,
+                    points: this.gainedPoints
+                 }
 
                 this.bot.logger.info(
                     this.bot.isMobile,
@@ -60,6 +64,10 @@ export class DailyCheckIn extends Workers {
                     'green'
                 )
             } else {
+                this.bot.userData.dailyCheckIn = {
+                    success: false,
+                    points: 0
+                  }
                 this.bot.logger.warn(
                     this.bot.isMobile,
                     'DAILY-CHECK-IN',
@@ -67,6 +75,10 @@ export class DailyCheckIn extends Workers {
                 )
             }
         } catch (error) {
+               this.bot.userData.dailyCheckIn = {
+                success: false,
+                points: 0
+              }
             this.bot.logger.error(
                 this.bot.isMobile,
                 'DAILY-CHECK-IN',

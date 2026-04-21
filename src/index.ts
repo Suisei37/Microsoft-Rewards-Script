@@ -46,6 +46,17 @@ interface AccountStats {
     duration: number
     success: boolean
     error?: string
+
+    dailyCheckIn?: {
+        success: boolean
+        points: number
+    }
+
+    readToEarn?: {
+        success: boolean
+        articlesRead: number
+        points: number
+    }
 }
 
 const executionContext = new AsyncLocalStorage<ExecutionContext>()
@@ -69,6 +80,17 @@ interface UserData {
     initialPoints: number
     currentPoints: number
     gainedPoints: number
+
+    dailyCheckIn?: {
+        success: boolean
+        points: number
+    }
+
+    readToEarn?: {
+        success: boolean
+        articlesRead: number
+        points: number
+    }
 }
 
 export class MicrosoftRewardsBot {
@@ -110,7 +132,18 @@ export class MicrosoftRewardsBot {
             langCode: 'en',
             initialPoints: 0,
             currentPoints: 0,
-            gainedPoints: 0
+            gainedPoints: 0,
+
+            dailyCheckIn: {
+                success: false,
+                 points: 0
+    },
+
+            readToEarn: {
+              success: false,
+         articlesRead: 0,
+               points: 0
+    }
         }
         this.logger = new Logger(this)
         this.accounts = []
@@ -321,7 +354,9 @@ export class MicrosoftRewardsBot {
                         finalPoints: accountFinalPoints,
                         collectedPoints: collectedPoints,
                         duration: parseFloat(durationSeconds),
-                        success: true
+                        success: true,
+                        dailyCheckIn: this.userData.dailyCheckIn,
+                        readToEarn: this.userData.readToEarn
                     })
 
                     this.logger.info(
@@ -382,7 +417,9 @@ try {
                         collectedPoints: 0,
                         duration: parseFloat(durationSeconds),
                         success: false,
-                        error: 'Flow failed'
+                        error: 'Flow failed',
+                        dailyCheckIn: this.userData.dailyCheckIn,
+                        readToEarn: this.userData.readToEarn
                     })
                 }
             } catch (error) {
@@ -400,7 +437,9 @@ try {
                     collectedPoints: 0,
                     duration: parseFloat(durationSeconds),
                     success: false,
-                    error: error instanceof Error ? error.message : String(error)
+                    error: error instanceof Error ? error.message : String(error),
+                    dailyCheckIn: this.userData.dailyCheckIn,
+                    readToEarn: this.userData.readToEarn
                 })
             }
         }

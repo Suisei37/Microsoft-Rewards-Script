@@ -115,12 +115,23 @@ export class ReadToEarn extends Workers {
 
             const finalBalance = Number(this.bot.userData.currentPoints ?? startBalance)
 
+            this.bot.userData.readToEarn = {
+                success: totalGained > 0,
+                articlesRead,
+                points: totalGained
+            }
+
             this.bot.logger.info(
                 this.bot.isMobile,
                 'READ-TO-EARN',
                 `Completed Read to Earn | articlesRead=${articlesRead} | totalGained=${totalGained} | startBalance=${startBalance} | finalBalance=${finalBalance}`
             )
         } catch (error) {
+              this.bot.userData.readToEarn = {
+                success: false,
+                articlesRead: 0,
+                points: 0
+        }
             this.bot.logger.error(
                 this.bot.isMobile,
                 'READ-TO-EARN',
