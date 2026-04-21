@@ -42,7 +42,27 @@ export function formatSummaryStats(accountStats: any[]) {
 
         msg += `• ${acc.email}\n`
         msg += `  ${acc.initialPoints} → ${acc.finalPoints}\n`
-        msg += `  ${status}\n\n`
+        msg += `  ${status}\n`
+
+        // DAILY
+        if (acc.dailyCheckIn) {
+            msg += `  🗓 Daily: ${
+                acc.dailyCheckIn.success
+                    ? `✅ +${acc.dailyCheckIn.points}`
+                    : '❌ gagal'
+            }\n`
+        }
+
+        // READ
+        if (acc.readToEarn) {
+            msg += `  📖 Read: ${
+                acc.readToEarn.success
+                    ? `✅ +${acc.readToEarn.points} (${acc.readToEarn.articlesRead}/10)`
+                    : '❌ gagal'
+            }\n`
+        }
+
+        msg += `\n`
     }
 
     return msg
