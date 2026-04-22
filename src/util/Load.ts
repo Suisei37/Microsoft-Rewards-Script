@@ -1,4 +1,4 @@
-import type { Cookie } from 'playwright-core'
+import type { Cookie } from 'patchright'
 import type { BrowserFingerprintWithHeaders } from 'fingerprint-generator'
 import fs from 'fs'
 import path from 'path'

@@ -1,6 +1,6 @@
 import { AsyncLocalStorage } from 'node:async_hooks'
 import cluster, { Worker } from 'cluster'
-import type { BrowserContext, Cookie, Page } from 'playwright-core'
+import type { BrowserContext, Cookie, Page } from 'patchright'
 import pkg from '../package.json'
 
 import type { BrowserFingerprintWithHeaders } from 'fingerprint-generator'
@@ -364,50 +364,7 @@ export class MicrosoftRewardsBot {
                         'ACCOUNT-END',
                         `Completed account: ${accountEmail} | Total: +${collectedPoints} | Old: ${accountInitialPoints} → New: ${accountFinalPoints} | Duration: ${durationSeconds}s`,
                         'green'
-)
-
-// 🔥 HARD CLEANUP & DELAY (Termux / Android friendly)
-try {
-    // Force GC if Node started with --expose-gc
-    if (typeof global.gc === 'function') {
-        global.gc()
-        await new Promise(res => setTimeout(res, 150))
-    }
-
-    // Kill leftover Playwright / Chromium processes
-    const { execSync } = require('child_process')
-    const killCommands = [
-        'pkill -f chromium',
-        'pkill -f chrome',
-        'pkill -f playwright'
-    ]
-
-    for (const cmd of killCommands) {
-        try {
-            execSync(`${cmd} || true`, { stdio: 'ignore' })
-        } catch {
-            // intentionally ignored
-        }
-    }
-
-    // Give Android kernel time to reclaim memory
-    await new Promise(res => setTimeout(res, 2000))
-
-    this.logger.info(
-        false,
-        'MEMORY',
-        `[${accountEmail}] Cleanup done → memory stabilized`,
-        'green'
-    )
-} catch (e) {
-    this.logger.warn(
-        false,
-        'MEMORY',
-        `Cleanup error: ${String(e)}`,
-        'yellow'
-    )
-}
-
+                    )
                     
                 } else {
                     accountStats.push({

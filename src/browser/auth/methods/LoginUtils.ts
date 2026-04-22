@@ -1,4 +1,4 @@
-import type { Page } from 'playwright-core'
+import type { Page } from 'patchright'
 import readline from 'readline'
 
 export interface PromptOptions {
