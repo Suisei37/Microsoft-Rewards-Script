@@ -23,7 +23,7 @@ import type { Account } from './interface/Account'
 import AxiosClient from './util/Axios'
 import { sendDiscord, flushDiscordQueue } from './logging/Discord'
 import { sendNtfy, flushNtfyQueue } from './logging/Ntfy'
-import { initTelegram, sendTelegram, formatSummaryStats } from './logging/Telegram'
+import { initTelegram, sendTelegram, formatSummaryStatsBatched } from './logging/Telegram'
 import type { DashboardData } from './interface/DashboardData'
 import type { AppDashboardData } from './interface/AppDashBoardData'
 import { PanelFlyoutData } from './interface/PanelFlyoutData'
@@ -414,15 +414,16 @@ export class MicrosoftRewardsBot {
                 'green'
             )
             
-const message = formatSummaryStats(accountStats)
+const messages = formatSummaryStatsBatched(accountStats, 10)
 
 // ==========================
 // TELEGRAM (PRIMARY)
 // ==========================
 if (this.config.webhook.telegram?.enabled) {
-    await sendTelegram(message)
+    for (const msg of messages) {
+    await sendTelegram(msg)
 }
-
+}
     // (opsional tapi recommended biar aman)
     await new Promise(r => setTimeout(r, 2000))
 
