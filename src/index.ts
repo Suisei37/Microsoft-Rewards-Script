@@ -391,7 +391,17 @@ try {
     }
 
     // Give Android kernel time to reclaim memory
-    await new Promise(res => setTimeout(res, 2000))
+const delay = Math.floor(Math.random() * (30000 - 15000 + 1)) + 15000
+
+this.logger.info(
+    false,
+    'DELAY',
+    `[${accountEmail}] Waiting ${(delay / 1000).toFixed(1)}s before next step`,
+    'green'
+)
+
+    await new Promise(res => setTimeout(res, delay))
+
 
     this.logger.info(
         false,
