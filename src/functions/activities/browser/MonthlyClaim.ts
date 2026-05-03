@@ -19,128 +19,119 @@ export class MonthlyClaim {
         this.oldBalance = Number(this.bot.userData.currentPoints ?? 0)
 
         try {
-            // 🔍 STEP 1: ambil points dari card "Ready to claim"
-            const claimPointsText = await page.evaluate(() => {
-                const label = Array.from(document.querySelectorAll('p'))
-                    .find(el => el.textContent?.trim() === 'Ready to claim')
+           // STEP 1: langsung klik card (tanpa baca points)
+            const card = page.locator('text=Ready to claim').first()
 
-                if (!label) return null
-
-                const container = label.closest('div')?.parentElement
-                if (!container) return null
-
-                const pointsEl = container.querySelector('p.text-title1')
-                return pointsEl?.textContent?.trim() ?? null
-            })
-
-            const claimPoints = Number(claimPointsText ?? 0)
-
-            this.bot.logger.debug(
-                this.bot.isMobile,
-                'MONTHLY-CLAIM',
-                `Detected claim points: ${claimPoints}`
-            )
-
-            // 🚫 SKIP kalau 0
-            if (!claimPoints || claimPoints <= 0) {
+            if (!(await card.count())) {
                 this.bot.logger.info(
                     this.bot.isMobile,
                     'MONTHLY-CLAIM',
-                    'No points to claim | Skipping'
-                )
-                return
-            }
-
-            // 🔍 STEP 2: klik card
-            const card = await page.locator('text=Ready to claim').first()
-
-            if (!(await card.count())) {
-                this.bot.logger.warn(
-                    this.bot.isMobile,
-                    'MONTHLY-CLAIM',
                     'Claim card not found'
-                )
-                return
-            }
+               )
+                     return
+           }
 
             this.bot.logger.info(
                 this.bot.isMobile,
                 'MONTHLY-CLAIM',
-                `Starting Monthly Claim | ${claimPoints} pts Ready To Claim | oldBalance=${this.oldBalance}`
-            )     
+                `Opening claim card | oldBalance=${this.oldBalance}`
+            )
 
             await card.click()
-            await this.bot.utils.wait(3000)
+
+            await this.bot.utils.wait(2500)
+
+            // 🔍 tunggu modal muncul (lebih reliable)
+await page.waitForSelector('text=Claim points', { timeout: 5000 }).catch(() => null)
+
+// cek apakah tombol claim ADA
+const claimBtn = page.locator('button:has-text("Claim points")')
+
+// cek kemungkinan tombol close (no claim case)
+const closeBtn = page.locator('button:has-text("Close"), button[aria-label="Close"]')
+
+// ❗ jika claim button tidak ada → berarti NO POINTS
+if (!(await claimBtn.count())) {
+    this.bot.logger.info(
+        this.bot.isMobile,
+        'MONTHLY-CLAIM',
+        'No claim button detected → no points available'
+    )
+
+    // optional: tutup modal biar bersih
+    if (await closeBtn.count()) {
+        await closeBtn.first().click().catch(() => null)
+    }
+
+    return
+}
+          
 
             // 🔁 STEP 3: klik tombol claim
-            for (let attempt = 1; attempt <= this.maxRetries; attempt++) {
-                this.bot.logger.debug(
-                    this.bot.isMobile,
-                    'MONTHLY-CLAIM',
-                    `Attempt ${attempt}/${this.maxRetries}`
-                )
+ for (let attempt = 1; attempt <= this.maxRetries; attempt++) {
+    this.bot.logger.debug(
+        this.bot.isMobile,
+        'MONTHLY-CLAIM',
+        `Attempt ${attempt}/${this.maxRetries}`
+    )
 
-                const btn = await page.locator('button:has-text("Claim points")').first()
+    // pastikan tombol masih ada
+    if (!(await claimBtn.count())) {
+        this.bot.logger.warn(
+            this.bot.isMobile,
+            'MONTHLY-CLAIM',
+            'Claim button disappeared unexpectedly'
+        )
+        return
+    }
 
-                if (!(await btn.count())) {
-                    this.bot.logger.warn(
-                        this.bot.isMobile,
-                        'MONTHLY-CLAIM',
-                        'Claim button not found'
-                    )
-                    await this.bot.utils.wait(1000)
-                    continue
-                }
+    // ⚡ React-safe click
+    await claimBtn.first().evaluate((el: any) => {
+        el.dispatchEvent(new PointerEvent('pointerdown', { bubbles: true }))
+        el.dispatchEvent(new MouseEvent('mousedown', { bubbles: true }))
+        el.dispatchEvent(new MouseEvent('mouseup', { bubbles: true }))
+        el.dispatchEvent(new MouseEvent('click', { bubbles: true }))
+    })
 
-                await btn.evaluate((el: any) => {
-                    el.dispatchEvent(new PointerEvent('pointerdown', { bubbles: true }))
-                    el.dispatchEvent(new MouseEvent('mousedown', { bubbles: true }))
-                    el.dispatchEvent(new MouseEvent('mouseup', { bubbles: true }))
-                    el.dispatchEvent(new MouseEvent('click', { bubbles: true }))
-                })
+    await this.bot.utils.wait(3000)
 
-                await this.bot.utils.wait(3000)
+    // 🔍 cek apakah masih ada
+    const stillExists = await claimBtn.count().catch(() => 0)
 
-                // 🔍 STEP 4: cek apakah button hilang
-                const stillExists = await page
-                    .locator('button:has-text("Claim points")')
-                    .count()
-                    .catch(() => 0)
+    if (stillExists === 0) {
+        const newBalance = await this.bot.browser.func.getCurrentPoints()
+        this.gainedPoints = newBalance - this.oldBalance
 
-                if (stillExists === 0) {
-                    const newBalance = await this.bot.browser.func.getCurrentPoints()
-                    this.gainedPoints = newBalance - this.oldBalance
+        if (this.gainedPoints > 0) {
+            this.bot.userData.currentPoints = newBalance
+            this.bot.userData.gainedPoints =
+                (this.bot.userData.gainedPoints ?? 0) + this.gainedPoints
 
-                    if (this.gainedPoints > 0) {
-                       this.bot.userData.currentPoints = newBalance
-                       this.bot.userData.gainedPoints =
-                       (this.bot.userData.gainedPoints ?? 0) + this.gainedPoints
+            this.bot.logger.info(
+                this.bot.isMobile,
+                'MONTHLY-CLAIM',
+                `SUCCESS | gained=${this.gainedPoints} | oldBalance=${this.oldBalance} | newBalance=${newBalance}`,
+                'green'
+            )
+        } else {
+            this.bot.logger.warn(
+                this.bot.isMobile,
+                'MONTHLY-CLAIM',
+                `Claim executed but no points gained | oldBalance=${this.oldBalance} | newBalance=${newBalance}`
+            )
+        }
 
-                this.bot.logger.info(
-                    this.bot.isMobile,
-                    'MONTHLY-CLAIM',
-                    `SUCCESS | gained=${this.gainedPoints} | oldBalance=${this.oldBalance} | newBalance=${newBalance}`,
-                    'green'
-                           )
-      } else {
-               this.bot.logger.warn(
-                   this.bot.isMobile,
-                   'MONTHLY-CLAIM',
-                   `Claim executed but no points gained | oldBalance=${this.oldBalance} | newBalance=${newBalance}`
-                )
-            }
+        return
+    }
 
-                    return
-                }
+    this.bot.logger.warn(
+        this.bot.isMobile,
+        'MONTHLY-CLAIM',
+        'Retrying claim button...'
+    )
 
-                this.bot.logger.warn(
-                    this.bot.isMobile,
-                    'MONTHLY-CLAIM',
-                    'Retrying claim button...'
-                )
-
-                await this.bot.utils.wait(1500)
-            }
+    await this.bot.utils.wait(1500)
+}
 
             this.bot.logger.error(
                 this.bot.isMobile,
